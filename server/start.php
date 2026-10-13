@@ -69,13 +69,23 @@ function mp_install_db(array $p, int $dbport): bool {
     if (!is_dir($p['datadir'] . '/mysql')) {
         mp_log('Inicializando datadir de MariaDB (primera vez)...');
         @mkdir($p['datadir'], 0777, true);
-        $cmd = [
-            $p['installdb'],
-            '--basedir=' . $p['mdbdir'],
-            '--datadir=' . $p['datadir'],
-            '--auth-root-authentication-method=normal',
-            '--skip-test-db',
-        ];
+        if ($p['win']) {
+            // El instalador de Windows (mysql_install_db.exe) solo acepta
+            // --datadir/--port (rechaza --basedir, --auth-*, --skip-test-db).
+            $cmd = [
+                $p['installdb'],
+                '--datadir=' . $p['datadir'],
+                '--port=' . $dbport,
+            ];
+        } else {
+            $cmd = [
+                $p['installdb'],
+                '--basedir=' . $p['mdbdir'],
+                '--datadir=' . $p['datadir'],
+                '--auth-root-authentication-method=normal',
+                '--skip-test-db',
+            ];
+        }
         $spec = [
             0 => ['pipe', 'r'],
             1 => ['file', $p['logs'] . '/install_db.log', 'a'],
